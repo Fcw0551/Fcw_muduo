@@ -1,4 +1,4 @@
-#include "Fcw_Socket.hpp"
+#include "../include/Fcw_Socket.hpp"
 
     Socket::Socket()
     :_sockfd(-1){
@@ -67,17 +67,41 @@
     }
     //接收数据
     ssize_t Socket::recv(void*buf,size_t len,int flag){
-        int ret=::recv(_sockfd, buf, len, flag);
-        if(ret <= 0){
-            if(errno == EAGAIN||errno==EINTR){
-                //1、非阻塞中缓冲区无数据
-                //2、被信号打断
-                return 0;
+        // int ret=::recv(_sockfd, buf, len, flag);
+        // if(ret <= 0){
+        //     if(errno == EAGAIN||errno==EINTR){
+        //         //1、非阻塞中缓冲区无数据
+        //         //2、被信号打断
+        //         return 0;
+        //     }
+        //     ERR_LOG("Recv error");
+        //     return -1;
+        // }
+        // return ret;
+        while (true)
+        {
+            ssize_t ret = ::recv(_sockfd, buf, len, flag);
+            if (ret > 0)
+            {
+                return ret; // 成功读取
             }
-            ERR_LOG("Recv error");
+            if (ret == 0)
+            {
+                return 0; // 对端正常关闭
+            }
+            // ret < 0
+            if (errno == EINTR)
+            {
+                continue; // 被信号中断，重试
+            }
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                return 0; // 非阻塞模式下暂无数据
+            }
+            // 真实错误
+            ERR_LOG("Recv error: %s", strerror(errno));
             return -1;
         }
-        return ret;
     }
     ssize_t Socket::recvNoBlock(void*buf,size_t len){
         return Socket::recv(buf,len,MSG_DONTWAIT);

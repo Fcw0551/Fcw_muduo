@@ -1,4 +1,4 @@
-#include "Fcw_Buffer.hpp"
+#include "../include/Fcw_Buffer.hpp"
     Buffer::Buffer() 
     : _reader_idx(0)
     , _writer_idx(0)
@@ -154,7 +154,7 @@
         _writer_idx = 0;
     }
     
-    //打印文本格式（核心：提取有效数据，构造 std::string 打印）
+    //打印文本格式（核心：提取有效数据，构造 std::string 打印）//调试用
     void Buffer::printBufferText(){
         // 1. 获取有效数据的长度和起始地址
         uint64_t valid_len = readSize();
@@ -170,6 +170,6 @@
         // 3. 构造 std::string（注意：如果数据不含 \0，需要指定长度，避免截断）
         std::string content(valid_data, valid_len);
 
-        // 4. 打印（用 DBG_LOG 保持和你的日志风格一致，也可用 std::cout）
-        DBG_LOG("Buffer 有效数据长度：%lu 字节，内容：\n%s", valid_len, content.c_str());
+        // 4. 打印
+        //DBG_LOG("Buffer 有效数据长度：%lu 字节，内容：\n%s", valid_len, content.c_str());
     }

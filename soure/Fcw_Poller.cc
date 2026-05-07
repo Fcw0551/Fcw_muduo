@@ -1,5 +1,5 @@
-#include "Fcw_Poller.hpp"
-#include "Fcw_Channel.hpp"
+#include "../include/Fcw_Poller.hpp"
+#include "../include/Fcw_Channel.hpp"
 // 更新事件
 //  EPOLL_CTL_ADD：添加 fd 到 epoll 实例（监控室加新 FD）；
 
@@ -48,12 +48,28 @@ void Poller::updateEvent(Channel *channel){
 }
 // 移除监控
 void Poller::removeEvent(Channel *channel){
-    auto it = _channels.find(channel->getFd());
-    if (it != _channels.end())
+    // auto it = _channels.find(channel->getFd());
+    // if (it != _channels.end())
+    // {
+    //     _channels.erase(it);
+    // }
+    // update(channel, EPOLL_CTL_DEL);
+
+    int fd = channel->getFd();
+    auto it = _channels.find(fd);
+    if (it == _channels.end())
     {
-        _channels.erase(it);
+        return; // 已经移除过，避免重复删除
     }
-    update(channel, EPOLL_CTL_DEL);
+    _channels.erase(it);
+    if (epoll_ctl(_epfd, EPOLL_CTL_DEL, fd, nullptr) < 0)
+    {
+        if (errno != EBADF)
+        {
+            ERR_LOG("epoll_ctl DEL error, fd: %d, errno: %d (%s)", fd, errno, strerror(errno));
+        }
+        // EBADF 是正常现象（连接已关闭），忽略
+    }
 }
 
 // 开始监控，返回就绪事件
